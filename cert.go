@@ -54,7 +54,7 @@ in which case instructions are displayed on the standard output.
 
 Default location of the config dir is
 {{.ConfigDir}}.
-		`,
+        `,
 	}
 
 	certDisco   = defaultDiscoFlag
@@ -64,6 +64,8 @@ Default location of the config dir is
 	certManual  = false
 	certDNS     = false
 	certKeypath string
+
+	gandiAPIKey string
 )
 
 func init() {
@@ -74,6 +76,7 @@ func init() {
 	cmdCert.flag.BoolVar(&certManual, "manual", certManual, "")
 	cmdCert.flag.BoolVar(&certDNS, "dns", certDNS, "")
 	cmdCert.flag.StringVar(&certKeypath, "k", "", "")
+	cmdCert.flag.StringVar(&gandiAPIKey, "g", "", "")
 }
 
 func runCert(args []string) {
@@ -197,10 +200,15 @@ func authz(ctx context.Context, client *acme.Client, domain string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Add a TXT record for _acme-challenge.%s with the value %q and press enter after it has propagated.\n",
-			domain, val)
-		var x string
-		fmt.Scanln(&x)
+
+		if gandiAPIKey != "" {
+			CreateTXTRecord(domain, chal.Token, gandiAPIKey)
+		} else {
+			fmt.Printf("Add a TXT record for _acme-challenge.%s with the value %q and press enter after it has propagated.\n",
+				domain, val)
+			var x string
+			fmt.Scanln(&x)
+		}
 	default:
 		// auto, via local server
 		val, err := client.HTTP01ChallengeResponse(chal.Token)
